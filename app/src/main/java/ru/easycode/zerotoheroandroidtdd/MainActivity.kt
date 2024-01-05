@@ -10,22 +10,24 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
     private lateinit var viewModel: MainViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
         viewModel = (application as App).viewModel
 
-        viewModel.liveData().observe(this) { uiState ->
-            uiState.apply(
-                button = binding.actionButton,
-                textView = binding.titleTextView,
-                progressBar = binding.progressBar
-            )
-        }
+        val adapter = MyAdapter()
+        binding.recyclerView.adapter = adapter
 
         binding.actionButton.setOnClickListener {
-            viewModel.load()
+            val text = binding.inputEditText.text.toString()
+            viewModel.add(text = text)
+            binding.inputEditText.setText("")
+        }
+
+        viewModel.liveData().observe(this) {
+            adapter.update(it)
         }
     }
 
