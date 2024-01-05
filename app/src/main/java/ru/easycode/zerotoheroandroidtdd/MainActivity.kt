@@ -6,23 +6,31 @@ import androidx.core.widget.addTextChangedListener
 import ru.easycode.zerotoheroandroidtdd.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    private val binding by lazy {
-        ActivityMainBinding.inflate(layoutInflater)
-    }
+
+    private lateinit var binding: ActivityMainBinding
+    private val myAdapter = MainAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        with(binding) {
-            inputEditText.addTextChangedListener {
-                actionButton.isEnabled = inputEditText.text.toString().length >= 3
-            }
+        binding.recyclerView.adapter = myAdapter
 
-            actionButton.setOnClickListener {
-                titleTextView.text = inputEditText.text.toString()
-                inputEditText.text?.clear()
-            }
+        binding.actionButton.setOnClickListener {
+            val text = binding.inputEditText.text.toString()
+            myAdapter.add(text)
+            binding.inputEditText.text?.clear()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        myAdapter.save(outState)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        myAdapter.restore(savedInstanceState)
     }
 }
