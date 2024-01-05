@@ -1,113 +1,81 @@
 package ru.easycode.zerotoheroandroidtdd
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import org.junit.After
+import androidx.lifecycle.LiveData
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Please also check out the ui test
- * @see ru.easycode.zerotoheroandroidtdd.Task019Test
- *
- * And other unit tests
- */
 class MainViewModelTest {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Before
-    fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-        initialize()
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
-    private lateinit var repository: FakeRepository
-    private lateinit var liveDataWrapper: FakeLiveDataWrapper
     private lateinit var viewModel: MainViewModel
+    private lateinit var listLiveDataWrapper: FakeListLiveDataWrapper
 
-    fun initialize() {
-        repository = FakeRepository.Base()
-        liveDataWrapper = FakeLiveDataWrapper.Base()
-        viewModel = MainViewModel(
-            liveDataWrapper = liveDataWrapper,
-            repository = repository
-        )
+    @Before
+    fun init() {
+        listLiveDataWrapper = FakeListLiveDataWrapper.Base()
+        viewModel = MainViewModel(listLiveDataWrapper = listLiveDataWrapper)
     }
 
     @Test
     fun test() {
-        repository.expectResult(LoadResult.Success(SimpleResponse(text = "testingText")))
+        viewModel.add(text = "first")
+        listLiveDataWrapper.checkListSame(listOf("first"))
 
-        viewModel.load()
-        liveDataWrapper.checkUpdateCalls(
-            listOf(
-                UiState.ShowProgress,
-                UiState.ShowData(text = "testingText")
-            )
-        )
-        repository.checkLoadCalledTimes(1)
+        viewModel.add(text = "second")
+        listLiveDataWrapper.checkListSame(listOf("first", "second"))
 
-        val bundleWrapper: BundleWrapper.Mutable = FakeBundleWrapper.Base()
+        val bundleWrapper: BundleWrapper.Mutable = FakeBundleWrapper()
         val bundleWrapperSave: BundleWrapper.Save = bundleWrapper
         val bundleWrapperRestore: BundleWrapper.Restore = bundleWrapper
 
-        viewModel.save(bundleWrapper = bundleWrapperSave)
+        viewModel.save(bundle = bundleWrapperSave)
 
-        initialize()
+        init()
 
-        viewModel.restore(bundleWrapper = bundleWrapperRestore)
-        liveDataWrapper.checkUpdateCalls(listOf(UiState.ShowData(text = "testingText")))
-        repository.checkLoadCalledTimes(0)
+        viewModel.restore(bundle = bundleWrapperRestore)
+        listLiveDataWrapper.checkListSame(listOf("first", "second"))
     }
 }
 
-private interface FakeBundleWrapper : BundleWrapper.Mutable {
+private interface FakeListLiveDataWrapper : ListLiveDataWrapper {
 
-    class Base : FakeBundleWrapper {
+    fun checkListSame(expected: List<CharSequence>)
 
-        private var uiState: UiState? = null
+    class Base : FakeListLiveDataWrapper {
 
-        override fun save(uiState: UiState) {
-            this.uiState = uiState
+        private val list = ArrayList<CharSequence>()
+
+        override fun checkListSame(expected: List<CharSequence>) {
+            assertEquals(expected, list)
         }
 
-        override fun restore(): UiState = uiState!!
+        override fun liveData(): LiveData<List<CharSequence>> {
+            throw IllegalStateException("not used here")
+        }
+
+        override fun add(new: CharSequence) {
+            list.add(new)
+        }
+
+        override fun save(bundle: BundleWrapper.Save) {
+            bundle.save(list)
+        }
+
+        override fun update(list: List<CharSequence>) {
+            this.list.addAll(list)
+        }
     }
 }
 
-private interface FakeRepository : Repository {
+class FakeBundleWrapper : BundleWrapper.Mutable {
 
-    fun expectResult(result: LoadResult)
+    private val cache = ArrayList<CharSequence>()
 
-    fun checkLoadCalledTimes(times: Int)
+    override fun save(list: ArrayList<CharSequence>) {
+        cache.addAll(list)
+    }
 
-    class Base : FakeRepository {
-
-        private lateinit var result: LoadResult
-
-        override fun expectResult(result: LoadResult) {
-            this.result = result
-        }
-
-        private var actualCalledTimes: Int = 0
-
-        override fun checkLoadCalledTimes(times: Int) {
-            assertEquals(times, actualCalledTimes)
-        }
-
-        override suspend fun load(): LoadResult {
-            actualCalledTimes++
-            return result
-        }
+    override fun restore(): List<CharSequence> {
+        return cache
     }
 }
