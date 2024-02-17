@@ -2,6 +2,7 @@ package ru.easycode.zerotoheroandroidtdd
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import ru.easycode.zerotoheroandroidtdd.databinding.ActivityMainBinding
 
 
@@ -10,6 +11,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var myAdapter: MyAdapter
     private lateinit var bundleWrapper: BundleWrapper.Mutable
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
