@@ -1,35 +1,32 @@
 package ru.easycode.zerotoheroandroidtdd
 
-import android.os.Build
 import android.os.Bundle
 
 interface BundleWrapper {
 
     interface Save {
-        fun save(uiState: UiState)
+
+        fun save(data: ArrayList<CharSequence>)
     }
 
     interface Restore {
-        fun restore(): UiState
+
+        fun restore(): ArrayList<CharSequence>
     }
 
     interface Mutable : Save, Restore
 
     class Base(private val bundle: Bundle) : Mutable {
-        override fun save(uiState: UiState) {
-            bundle.putSerializable(KEY, uiState)
+        override fun save(data: ArrayList<CharSequence>) {
+            bundle.putCharSequenceArrayList(KEY, data)
         }
 
-        override fun restore(): UiState {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                bundle.getSerializable(KEY, UiState::class.java) as UiState
-            } else {
-                bundle.getSerializable(KEY) as UiState
-            }
+        override fun restore(): ArrayList<CharSequence> {
+            return bundle.getCharSequenceArrayList(KEY) ?: ArrayList()
         }
+    }
 
-        companion object {
-            private const val KEY = "uiStateKey"
-        }
+    companion object {
+        private const val KEY = "dataKey"
     }
 }
