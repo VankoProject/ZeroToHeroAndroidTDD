@@ -4,38 +4,37 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import ru.easycode.zerotoheroandroidtdd.databinding.ActivityMainBinding
 
+
 class MainActivity : AppCompatActivity() {
 
-    private val binding by lazy {
-        ActivityMainBinding.inflate(layoutInflater)
-    }
-    private lateinit var viewModel: MainViewModel
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var myAdapter: MyAdapter
+    private lateinit var bundleWrapper: BundleWrapper.Mutable
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel = (application as App).viewModel
-
-        viewModel.liveData().observe(this) { uiState ->
-            uiState.apply(
-                button = binding.actionButton,
-                textView = binding.titleTextView,
-                progressBar = binding.progressBar
-            )
-        }
+        myAdapter = MyAdapter()
+        binding.recyclerView.adapter = myAdapter
 
         binding.actionButton.setOnClickListener {
-            viewModel.load()
+            with(binding) {
+                val text = inputEditText.text.toString()
+                myAdapter.show(text)
+                inputEditText.text?.clear()
+            }
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        viewModel.save(BundleWrapper.Base(outState))
+        myAdapter.save(BundleWrapper.Base(outState))
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        viewModel.restore(BundleWrapper.Base(savedInstanceState))
+        myAdapter.restore(BundleWrapper.Base(savedInstanceState))
     }
 }
