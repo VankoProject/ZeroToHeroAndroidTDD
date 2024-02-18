@@ -18,16 +18,19 @@ class CreateFragment : BaseFragment<FragmentCreateBinding>() {
         return FragmentCreateBinding.inflate(inflater, container, false)
     }
 
+    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            viewModel.comeback()
+        }
+
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel = (activity as ProvideViewModel).viewModel(CreateViewModel::class.java)
 
-        requireActivity().onBackPressedDispatcher.addCallback(object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                viewModel.comeback()
-            }
-        })
+        requireActivity().onBackPressedDispatcher.addCallback(onBackPressedCallback)
 
         with(binding) {
             inputEditText.addTextChangedListener {
@@ -40,5 +43,10 @@ class CreateFragment : BaseFragment<FragmentCreateBinding>() {
             }
         }
 
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        onBackPressedCallback.remove()
     }
 }
